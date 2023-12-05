@@ -2,38 +2,43 @@ version: "3"
 
 services:
   gateway:
-    image: codecov/self-hosted-gateway:latest-calver #note: this is for setup purposes only, be sure to pin to the latest release from our changelog: https://docs.codecov.io/changelog
-    volumes:
-      - ./config:/config
-      #- ${CODECOV_SSL_CERT-/cert/codecov.crt}:/etc/codecov/ssl/certs/cert.crt:ro # uncomment if using ssl
-    ports:
-      - "${CODECOV_PORT-8080}:8080"
-      #- "${CODECOV_SSL_PORT-8443}:8443" # uncomment if using ssl
+    image: codecov/self-hosted-gateway:latest-stable
     environment:
-      - CODECOV_GATEWAY_MINIO_ENABLED=true
-      #- CODECOV_GATEWAY_SSL_ENABLED=true # uncomment if using ssl
-    networks:
-      - codecov
-    depends_on:
-      - api
-      - frontend
+      CODECOV_API_HOST: example.domain.com
+      CODECOV_API_PORT: 443
+      CODECOV_API_SCHEME: https
+      CODECOV_API_HOST_HEADER: example.domain.com
+      CODECOV_IA_HOST: example.domain.com
+      CODECOV_IA_PORT: 443
+      CODECOV_IA_SCHEME: https
+      CODECOV_IA_HOST_HEADER: example.domain.com
+      CODECOV_DEFAULT_HOST: example.domain.com
+      CODECOV_DEFAULT_PORT: 443
+      CODECOV_DEFAULT_SCHEME: https
+      CODECOV_DEFAULT_HOST_HEADER: example.domain.com
+      #CODECOV_GATEWAY_PROXY_MODE_ENABLED: true
+      #CODECOV_GATEWAY_CHROOT_DISABLED: true
+      #CODECOV_GATEWAY_SSL_ENABLED: true
+    ports:
+      - "9080:8080"
+      - "9404:8404"
 
   frontend:
-    image: codecov/self-hosted-frontend:latest-calver #note: this is for setup purposes only, be sure to pin to the latest release from our changelog: https://docs.codecov.io/changelog
+    image: codecov/self-hosted-frontend:latest-stable #note: this is for setup purposes only, be sure to pin to the latest release from our changelog: https://docs.codecov.io/changelog
     environment:
-      - CODECOV_BASE_HOST=localhost:8080
-      - CODECOV_API_HOST=localhost:8080
-      - CODECOV_IA_HOST=localhost:8080
-      - CODECOV_SCHEME=http
+      - CODECOV_BASE_HOST=example.domain.com
+      - CODECOV_API_HOST=example.domain.com
+      - CODECOV_IA_HOST=example.domain.com
+      - CODECOV_SCHEME=https
     volumes:
       - ./config:/config
     ports:
-      - "8080"
+      - "8080:8080"
     networks:
       - codecov
 
   api:
-    image: codecov/self-hosted-api:latest-calver #note: this is for setup purposes only, be sure to pin to the latest release from our changelog: https://docs.codecov.io/changelog
+    image: codecov/self-hosted-api:latest-stable
     volumes:
       - ./config:/config
     networks:
@@ -43,9 +48,14 @@ services:
       - timescale
       - postgres
       - redis
-
+    environment:
+      - RUN_ENV=ENTERPRISE
+      - SETUP__TIMESERIES__ENABLED=${TIMESERIES_ENABLED-true}
+    ports:
+      - "8000:8000"
+    
   worker:
-    image: codecov/self-hosted-worker:latest-calver #note: this is for setup purposes only, be sure to pin to the latest release from our changelog: https://docs.codecov.io/changelog
+    image: codecov/self-hosted-worker:latest-stable #note: this is for setup purposes only, be sure to pin to the latest release from our changelog: https://docs.codecov.io/changelog
     environment:
       - RUN_ENV=ENTERPRISE
     volumes:
@@ -65,6 +75,8 @@ services:
       - redis-volume:/data
     networks:
       - codecov
+    ports:
+      - "6379:6379"
 
   postgres:
     image: postgres:14-alpine
@@ -75,7 +87,7 @@ services:
     volumes:
       - postgres-volume:/var/lib/postgresql/data
     ports:
-      - "9432:5432"
+      - "5432:5432"
     networks:
       - codecov
 
