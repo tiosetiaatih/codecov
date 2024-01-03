@@ -39,6 +39,7 @@ services:
 
   api:
     image: codecov/self-hosted-api:latest-stable
+    #image: codecov/enterprise-api:latest-stable
     volumes:
       - ./config:/config
     networks:
